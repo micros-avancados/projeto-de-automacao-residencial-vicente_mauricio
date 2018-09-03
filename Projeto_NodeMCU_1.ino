@@ -1,8 +1,9 @@
 //Projeto_NodeMCU_1
 //Univates_2018_2_Vicente_Mauricio
 //Sistemas_Microprocessados_Avançados_Dispositivos_para automação_residencial
-//#include <IRremote.h>
-//#include <IRremoteInt.h>
+
+#include <IRremote.h>
+
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -18,7 +19,7 @@ ESP8266WebServer server(80);
 WiFiClient microsavancados;
 PubSubClient client(microsavancados);
 
-//IRsend irsend;
+IRsend irsend;
 
 // Define nome da rede e senha a ser utilizado no SETUP CONFIGURAÇÃO
 const char *ssid = "micros_1_A";
@@ -64,7 +65,7 @@ void espaco();
 
 void setup()
 {
-  // IRsend irsend(4)
+  //IRsend irsend(4)
 
   //Define entradas (D1 - modo oper.(L) conf. (H) && A0 - sensor de temperatura)
   pinMode (D1, INPUT);
@@ -182,7 +183,6 @@ void loop() {
   if (digitalRead(D1) == 1) {
     server.handleClient();
   }
-
 
   //Loop operação
 
@@ -352,16 +352,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void liga() {
   Serial.print("teste LIGA");
-  int khz = 38;
-  /*
+  int khz = 38;           //Freqüência portadora de 38kHz para o protocolo NEC
+  
     unsigned sinalLiga[] = {4600, 4250, 750, 1450, 750, 400, 700, 1450, 700, 1500, 700, 400, 700, 450, 700, 1500, 700, 450, 700, 450, 700, 1550, 700, 450, 700, 450, 700, 1500, 700, 1550, 700, 450, 700, 1550, 700,
                           1500, 700, 450, 650, 450, 650, 1550, 650, 1550, 650, 1500, 650, 1550, 650, 1500, 650, 500, 650, 1550, 650, 1550, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500,
                           650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 5150, 4450, 4350, 650, 1550, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 1550, 650,
                           500, 650, 500, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 500, 650, 1600, 650, 1550, 650, 500,
                           650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 500, 600, 500, 600, 1600, 650, 1550, 650, 500, 600, 500, 600, 1600, 650, 1550, 650, 1600, 650, 1600, 650
                          };
-  */
-  //irsend.sendRaw(sinalLiga, sizeof(sinalLiga) / sizeof(sinalLiga[0]), khz);  // Send a raw data capture at 38kHz.
+                              //Exportação em lote (IRremote) - RAW
+  
+  irsend.sendRaw(sinalLiga, sizeof(sinalLiga) / sizeof(sinalLiga[0]), khz);  // abordagem usada para calcular automaticamente o tamanho da matriz.
 }
 
 
@@ -371,17 +372,19 @@ void liga() {
 
 void desliga () {
   Serial.print("teste DESLIGA");
-  int khz = 38;
-  /*
+  int khz = 38;             //Freqüência portadora de 38kHz para o protocolo NEC
+  
     unsigned sinalDesliga[] = {4600, 4250, 750, 1450, 750, 400, 700, 1450, 700, 1500, 700, 400, 700, 450, 700, 1500, 700, 450, 700, 450, 700, 1550, 700, 450, 700, 450, 700, 1500, 700, 1550, 700, 450, 700, 1550, 700,
                                450, 700, 1550, 700, 1500, 700, 1550, 650, 1550, 650, 450, 650, 1550, 650, 1500, 650, 1550, 650, 450, 650, 500, 650, 450, 650, 500, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 500,
                                650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 5150, 4450, 4350, 650, 1550, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 1550, 650,
                                500, 650, 500, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 500,
                                650, 500, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 600, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1600, 650
-                              };  // SAMSUNG B24D7B84
-  */
-  //  irsend.sendRaw(sinalDesliga, sizeof(sinalDesliga) / sizeof(sinalDesliga[0]), khz);  // Send a raw data capture at 38kHz.
+                              };  // SAMSUNG B24D7B84  
+                                  //Exportação em lote (IRremote) - RAW
+  
+    irsend.sendRaw(sinalDesliga, sizeof(sinalDesliga) / sizeof(sinalDesliga[0]), khz);  // abordagem usada para calcular automaticamente o tamanho da matriz.
 }
+
 
 
 void espaco() {
