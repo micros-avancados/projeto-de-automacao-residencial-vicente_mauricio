@@ -1,8 +1,3 @@
-//Projeto_NodeMCU_1
-//Univates_2018_2_Vicente_Mauricio
-//Sistemas_Microprocessados_Avançados_Dispositivos_para automação_residencial
-
-#include <IRremoteESP8266.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
