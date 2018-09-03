@@ -261,9 +261,6 @@ void salvar () {
 
 void callback(char* topic, byte* payload, unsigned int length) {
 
-  Serial.print("CAALBACK");
-
-
   //Converte a informação (ponteiro) para char
   int i;
   char value[100];
