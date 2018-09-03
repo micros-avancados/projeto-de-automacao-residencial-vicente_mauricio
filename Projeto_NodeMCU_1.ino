@@ -2,7 +2,7 @@
 //Univates_2018_2_Vicente_Mauricio
 //Sistemas_Microprocessados_Avançados_Dispositivos_para automação_residencial
 
-#include <IRremote.h>
+//#include <IRremote.h>
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -19,7 +19,7 @@ ESP8266WebServer server(80);
 WiFiClient microsavancados;
 PubSubClient client(microsavancados);
 
-IRsend irsend;
+//IRsend irsend;
 
 // Define nome da rede e senha a ser utilizado no SETUP CONFIGURAÇÃO
 const char *ssid = "micros_1_A";
@@ -37,7 +37,7 @@ String SetPointConfig;
 int estado = 0;
 String Status = "Ar Desligado";
 
-int SETPOINT;
+int SETPOINT = 25;
 
 char rede[30];
 char senha[30];
@@ -65,11 +65,14 @@ void espaco();
 
 void setup()
 {
-  //IRsend irsend(4)
+  // IRsend irsend(4)
 
   //Define entradas (D1 - modo oper.(L) conf. (H) && A0 - sensor de temperatura)
   pinMode (D1, INPUT);
   pinMode (A0, INPUT);
+
+  pinMode (D0, OUTPUT);   //PINO PARA TESTE
+
 
   //Inicia o monitor serial
   Serial.begin(115200);
@@ -117,15 +120,19 @@ void setup()
   else {
     Serial.println("MODO: operação");
 
-
+    EEPROM.begin(MEM_ALOC_SIZE);
     EEPROM.get(0, rede);
-    Serial.print("Teste rede: ");
+    Serial.print("Rede Wifi cadastrada: ");
     Serial.println(rede);
 
-    EEPROM.get(1, senha);
-    Serial.print("Teste senha: ");
+    EEPROM.get(30, senha);
+    Serial.print("Senha de rede WiFi cadastrada: ");
     Serial.println(senha);
 
+    EEPROM.end();
+
+    Serial.println("Set Point pré ajustado em 25ºC");
+    Serial.println("OBS: Set Point pode ser definido no servidor MQTT");
 
     //CONECTA A REDE WIFI
     WiFi.mode(WIFI_STA);
@@ -135,6 +142,8 @@ void setup()
       delay(500);
       Serial.print(".");
     }
+    espaco();
+    
     Serial.println("");
     Serial.println("WiFi conectado");
 
@@ -184,6 +193,7 @@ void loop() {
     server.handleClient();
   }
 
+
   //Loop operação
 
   else {
@@ -214,9 +224,7 @@ void configura () {
               "    <input type=\"text\" name=\"NomeRede\" value=\"Informe a Rede\">\n"
               "    <br> Senha name: <br>\n"
               "    <input type=\"text\" name=\"SenhaRede\" value=\"Informe a senha\">\n"
-              "    <br> Setpoint name: <br>\n"
-              "    <input type=\"text\" name=\"SetPoint\" value=\"SetPoint de temperatura\">\n"
-              "    <br><br>\n"
+              "    <br>\n"
               "    <input type=\"submit\" value=\"Submit\">\n"
               "</form>\n"
               "<p>If you click the \"Submit\" button, the form - data will be sent to a page called \"/salvar\".</p>\n"
@@ -235,48 +243,27 @@ void salvar () {
 
   novaRede = server.arg("NomeRede");
   novaSenha = server.arg("SenhaRede");
-  SetPointConfig = server.arg("SetPoint");
 
   //Apresenta os dados informados
   Serial.print("Nome da rede: ");
   Serial.println(novaRede);
   Serial.print("Senha: ");
   Serial.println(novaSenha);
-  Serial.print("SetPoint: ");
-  Serial.println(SetPointConfig);
 
   //Salva os dados na memória EEPROM
   novaRede.toCharArray (rede, 30);
   novaSenha.toCharArray(senha, 30);
-  SetPointConfig.toCharArray(sp, 30);
 
   EEPROM.begin(MEM_ALOC_SIZE);
   EEPROM.put(0, rede);
-  EEPROM.put(1, senha);
-  EEPROM.put(2, sp);
+  EEPROM.put(30, senha);
   EEPROM.end();
 
   EEPROM.begin(MEM_ALOC_SIZE);
 
-  EEPROM.get(0, rede);
-  Serial.print("Teste rede: ");
-  Serial.println(rede);
-
-  EEPROM.get(1, senha);
-  Serial.print("Teste senha: ");
-  Serial.println(senha);
-
-  EEPROM.get(2, sp);
-  Serial.print("Teste se point: ");
-  Serial.println(sp);
-
   EEPROM.end();
 
-
-  SETPOINT = (SetPointConfig).toInt();
-
   server.send(200, "text/html", "<p>Dados salvos com sucesso</p>");
-
 }
 
 
@@ -298,13 +285,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //Verifica se valor recebido é de setpoint
   if (strcmp(topic, "setpoint") == 0 ) {
 
-    SetPointConfig = atof(value);                                    //converte char para float e salva valor em 'setpoint'
-    /* SetPointConfig = (SetP).toInt();
-      //Salva os dados na memória EEPROM
-      EEPROM.begin(MEM_ALOC_SIZE);
-      EEPROM.write(2, SetPointConfig);
-      EEPROM.end();
-    */
+    SETPOINT = int(atof(value));                                    //converte char para float e salva valor em 'setpoint'
+
+    //Salva os dados na memória EEPROM
+    SetPointConfig = (value);
+
     //Apresenta novo valor de set point
     espaco();
     Serial.print("Novo SETPOINT: ");
@@ -318,7 +303,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
     //Apresenta valor de temperatura recebido
     Serial.print("SetPoint: ");
-    Serial.println(SetPointConfig);
+    Serial.println(SETPOINT);
     Serial.println("");
     Serial.print("Valor de temperatura recebido: ");
     Serial.println(temp);
@@ -350,41 +335,40 @@ void callback(char* topic, byte* payload, unsigned int length) {
                                   FUNÇÃO LIGA
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-void liga() {
-  Serial.print("teste LIGA");
-  int khz = 38;           //Freqüência portadora de 38kHz para o protocolo NEC
+// void liga() {
+//   Serial.print("teste LIGA");
+//   int khz = 38;           //Freqüência portadora de 38kHz para o protocolo NEC
   
-    unsigned sinalLiga[] = {4600, 4250, 750, 1450, 750, 400, 700, 1450, 700, 1500, 700, 400, 700, 450, 700, 1500, 700, 450, 700, 450, 700, 1550, 700, 450, 700, 450, 700, 1500, 700, 1550, 700, 450, 700, 1550, 700,
-                          1500, 700, 450, 650, 450, 650, 1550, 650, 1550, 650, 1500, 650, 1550, 650, 1500, 650, 500, 650, 1550, 650, 1550, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500,
-                          650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 5150, 4450, 4350, 650, 1550, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 1550, 650,
-                          500, 650, 500, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 500, 650, 1600, 650, 1550, 650, 500,
-                          650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 500, 600, 500, 600, 1600, 650, 1550, 650, 500, 600, 500, 600, 1600, 650, 1550, 650, 1600, 650, 1600, 650
-                         };
-                              //Exportação em lote (IRremote) - RAW
+//     unsigned sinalLiga[] = {4600, 4250, 750, 1450, 750, 400, 700, 1450, 700, 1500, 700, 400, 700, 450, 700, 1500, 700, 450, 700, 450, 700, 1550, 700, 450, 700, 450, 700, 1500, 700, 1550, 700, 450, 700, 1550, 700,
+//                           1500, 700, 450, 650, 450, 650, 1550, 650, 1550, 650, 1500, 650, 1550, 650, 1500, 650, 500, 650, 1550, 650, 1550, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500,
+//                           650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 5150, 4450, 4350, 650, 1550, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 1550, 650,
+//                           500, 650, 500, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 500, 650, 1600, 650, 1550, 650, 500,
+//                           650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 500, 600, 500, 600, 1600, 650, 1550, 650, 500, 600, 500, 600, 1600, 650, 1550, 650, 1600, 650, 1600, 650
+//                          };
+//                               //Exportação em lote (IRremote) - RAW
   
-  irsend.sendRaw(sinalLiga, sizeof(sinalLiga) / sizeof(sinalLiga[0]), khz);  // abordagem usada para calcular automaticamente o tamanho da matriz.
-}
+//   irsend.sendRaw(sinalLiga, sizeof(sinalLiga) / sizeof(sinalLiga[0]), khz);  // abordagem usada para calcular automaticamente o tamanho da matriz.
+// }
 
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                   FUNÇÃO DESLIGA
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-void desliga () {
-  Serial.print("teste DESLIGA");
-  int khz = 38;             //Freqüência portadora de 38kHz para o protocolo NEC
+// void desliga () {
+//   Serial.print("teste DESLIGA");
+//   int khz = 38;             //Freqüência portadora de 38kHz para o protocolo NEC
   
-    unsigned sinalDesliga[] = {4600, 4250, 750, 1450, 750, 400, 700, 1450, 700, 1500, 700, 400, 700, 450, 700, 1500, 700, 450, 700, 450, 700, 1550, 700, 450, 700, 450, 700, 1500, 700, 1550, 700, 450, 700, 1550, 700,
-                               450, 700, 1550, 700, 1500, 700, 1550, 650, 1550, 650, 450, 650, 1550, 650, 1500, 650, 1550, 650, 450, 650, 500, 650, 450, 650, 500, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 500,
-                               650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 5150, 4450, 4350, 650, 1550, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 1550, 650,
-                               500, 650, 500, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 500,
-                               650, 500, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 600, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1600, 650
-                              };  // SAMSUNG B24D7B84  
-                                  //Exportação em lote (IRremote) - RAW
+//     unsigned sinalDesliga[] = {4600, 4250, 750, 1450, 750, 400, 700, 1450, 700, 1500, 700, 400, 700, 450, 700, 1500, 700, 450, 700, 450, 700, 1550, 700, 450, 700, 450, 700, 1500, 700, 1550, 700, 450, 700, 1550, 700,
+//                                450, 700, 1550, 700, 1500, 700, 1550, 650, 1550, 650, 450, 650, 1550, 650, 1500, 650, 1550, 650, 450, 650, 500, 650, 450, 650, 500, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 500,
+//                                650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1550, 650, 5150, 4450, 4350, 650, 1550, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 1550, 650,
+//                                500, 650, 500, 650, 1600, 650, 500, 650, 500, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 500, 650, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 1600, 650, 1550, 650, 1600, 650, 500, 650, 500, 650, 500,
+//                                650, 500, 650, 1550, 650, 500, 650, 500, 650, 1600, 650, 1600, 650, 1550, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 650, 500, 600, 1550, 650, 1600, 650, 1550, 650, 1600, 650, 1600, 650
+//                               };  // SAMSUNG B24D7B84  
+//                                   //Exportação em lote (IRremote) - RAW
   
-    irsend.sendRaw(sinalDesliga, sizeof(sinalDesliga) / sizeof(sinalDesliga[0]), khz);  // abordagem usada para calcular automaticamente o tamanho da matriz.
-}
-
+//     irsend.sendRaw(sinalDesliga, sizeof(sinalDesliga) / sizeof(sinalDesliga[0]), khz);  // abordagem usada para calcular automaticamente o tamanho da matriz.
+// }
 
 
 void espaco() {
