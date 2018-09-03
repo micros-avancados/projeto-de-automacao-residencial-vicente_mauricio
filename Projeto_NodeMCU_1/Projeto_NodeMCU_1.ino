@@ -41,20 +41,14 @@ const char *BROKER_PASSWORD = "HWW0wyt9laS-";
 void configura ();
 void salvar ();
 void espaco();
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                               SETUP GERAL
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void setup()
 {
-  // IRsend irsend(4)
-
   //Define entradas (D1 - modo oper.(L) conf. (H) && A0 - sensor de temperatura)
   pinMode (D1, INPUT);
   pinMode (A0, INPUT);
-
-
 
   //Inicia o monitor serial
   Serial.begin(115200);
@@ -67,9 +61,7 @@ void setup()
   Serial.println("Mauricio Lorenzon && Vicente Bugs");
   espaco();
 
-
   //SETUP CONFIGURAÇÃO
-
   if (digitalRead(D1) == 1) {
 
     //Cria rede WiFi
@@ -80,7 +72,6 @@ void setup()
     Serial.println("Configurando ponto de acesso...");
     WiFi.softAP(ssid, password);
     espaco();
-
 
     //Apresenta endereço de IP
     IPAddress myIP = WiFi.softAPIP();
@@ -96,9 +87,7 @@ void setup()
     espaco();
   }
 
-
   //SETUP OPERAÇÃO
-
   else {
     Serial.println("MODO: operação");
     espaco();
@@ -136,7 +125,6 @@ void setup()
 
     client.setServer(BROKER_MQTT, BROKER_PORT);
 
-
     while (!client.connected()) {
       Serial.println("Conectando ao servidor MQTT .... ");
 
@@ -153,22 +141,17 @@ void setup()
     }
   }
 }
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                               FUNÇÃO LOOP
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void loop() {
 
   //Loop configuração
-
   if (digitalRead(D1) == 1) {
     server.handleClient();
   }
 
-
   //Loop operação
-
   else {
     client.loop();
 
@@ -182,16 +165,12 @@ void loop() {
     Serial.print("Temperatura envidada: ");
     Serial.println(mensagem);
     espaco();
-
     delay(2000);
   }
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                   EM MODO CONFIGURAÇÃO - LÊ OS DADOS DIGITADOS (REDE, SENHA, SETPOINT)
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void configura () {
   server.send(200, "text/html",
               "<html>\n"
@@ -209,12 +188,9 @@ void configura () {
               "</html>"
              );
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                    SALVA OS DADOS INFORMADOS NA MEMÓRIA
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void salvar () {
 
   novaRede = server.arg("NomeRede");
@@ -242,12 +218,9 @@ void salvar () {
 
   server.send(200, "text/html", "<p>Dados salvos com sucesso</p>");
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                   FUNÇÃO ESPAÇO
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void espaco() {
   Serial.println("--------------------------------------------");
   Serial.println("");

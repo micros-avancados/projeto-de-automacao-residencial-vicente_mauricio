@@ -56,19 +56,15 @@ void salvar ();
 void desliga ();
 void liga ();
 void espaco();
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                               SETUP GERAL
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void setup()
 {
 
   //Define entradas (D1 - modo oper.(L) conf. (H) && A0 - sensor de temperatura)
   pinMode (D1, INPUT);
-
   pinMode (D0, OUTPUT);   //PINO PARA TESTE
-
 
   //Inicia o monitor serial
   Serial.begin(115200);
@@ -83,7 +79,6 @@ void setup()
 
 
   //SETUP CONFIGURAÇÃO
-
   if (digitalRead(D1) == 1) {
 
     //Cria rede WiFi
@@ -112,7 +107,6 @@ void setup()
 
 
   //SETUP OPERAÇÃO
-
   else {
     irsend.begin();
 
@@ -144,7 +138,6 @@ void setup()
       Serial.print(".");
     }
 
-
     Serial.println("");
     Serial.println("WiFi conectado");
 
@@ -168,23 +161,19 @@ void setup()
         Serial.print("Falha na conexão ");
         Serial.print(client.state());
         delay(2000);
-
       }
       espaco();
     }
-
+    
     client.subscribe("temperatura");
     client.subscribe("setpoint");
   }
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                               FUNÇÃO LOOP
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 void loop() {
-
   //Loop configuração
 
   if (digitalRead(D1) == 1) {
@@ -201,12 +190,9 @@ void loop() {
 
   }
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                   EM MODO CONFIGURAÇÃO - LÊ OS DADOS DIGITADOS (REDE, SENHA, SETPOINT)
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void configura () {
   server.send(200, "text/html",
               "<html>\n"
@@ -224,12 +210,9 @@ void configura () {
               "</html>"
              );
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                    SALVA OS DADOS INFORMADOS NA MEMÓRIA
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void salvar () {
 
   novaRede = server.arg("NomeRede");
@@ -257,12 +240,9 @@ void salvar () {
 
   server.send(200, "text/html", "<p>Dados salvos com sucesso</p>");
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 FUNÇÃO QUE RECEBE OS VALORES PUBLICADOS NO SERVIDOR
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void callback(char* topic, byte* payload, unsigned int length) {
 
   //Converte a informação (ponteiro) para char
@@ -272,7 +252,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     value[i] = (char)payload[i];
   }
   value[i] = '\0';
-
 
   //Verifica se valor recebido é de setpoint
   if (strcmp(topic, "setpoint") == 0 ) {
@@ -321,12 +300,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     espaco();
   }
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                   FUNÇÃO LIGA
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void liga() {
   digitalWrite (D0, LOW);
 
@@ -343,12 +319,9 @@ void liga() {
     irsend.sendRaw(sinalLiga, (sizeof(sinalLiga) / sizeof(sinalLiga[0])), khz);  // Send a raw data capture at 38kHz.
   }
 }
-
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                   FUNÇÃO DESLIGA
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 void desliga () {
   espaco();
 
@@ -366,7 +339,6 @@ void desliga () {
     irsend.sendRaw(sinalDesliga, (sizeof(sinalDesliga) / sizeof(sinalDesliga[0])), khz);  // Send a raw data capture at 38kHz.
   }
 }
-
 
 void espaco() {
   Serial.println("--------------------------------------------");
