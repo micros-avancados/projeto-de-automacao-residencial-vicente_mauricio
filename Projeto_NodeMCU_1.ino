@@ -65,7 +65,6 @@ void espaco();
 
 void setup()
 {
-  // IRsend irsend(4)
 
   //Define entradas (D1 - modo oper.(L) conf. (H) && A0 - sensor de temperatura)
   pinMode (D1, INPUT);
